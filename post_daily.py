@@ -6,7 +6,6 @@ from PIL import Image, ImageDraw
 # API Configuration and Environment Endpoints
 BUFFER_API_URL = "https://api.buffer.com"
 BUFFER_API_KEY = os.getenv("BUFFER_API_KEY")
-ORGANIZATION_ID = os.getenv("BUFFER_ORG_ID")  
 
 # Collect all three channel IDs from your GitHub Secrets into a list for looping
 channel_ids_env = [
@@ -23,9 +22,9 @@ if not CHANNEL_IDS:
     if single_channel:
         CHANNEL_IDS = [single_channel]
 
-# Fail-safe validation check: Stops execution immediately if any core secret is missing
-if not BUFFER_API_KEY or not ORGANIZATION_ID or not CHANNEL_IDS:
-    raise ValueError("❌ Missing GitHub Secrets! Ensure BUFFER_API_KEY, BUFFER_ORG_ID, and Channel IDs are properly configured.")
+# Fail-safe validation check: Stops execution immediately if core credentials are missing
+if not BUFFER_API_KEY or not CHANNEL_IDS:
+    raise ValueError("❌ Missing GitHub Secrets! Ensure BUFFER_API_KEY and Channel IDs are properly configured.")
 
 # Generative text blocks to create unique developer content every run
 DOMAINS = [
@@ -34,7 +33,7 @@ DOMAINS = [
     ("CI/CD PIPELINES", "Automate Builds to Ship Faster", "🚀 DevOps Workflow"),
     ("UI/UX & STATE DIFFS", "Ensure Fluid Visual Transitions", "📱 Modern Frontend Design"),
     ("CLOUD INFRASTRUCTURE", "Design for High Availability & Fault Tolerance", "☁️ Cloud Architecture"),
-    ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🗄️️ Backend Performance"),
+    ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🗄 Backend Performance"),
     ("STATE MANAGEMENT", "Keep Data Flow Predictable & Traceable", "🔄 Application Architecture"),
     ("SECURITY ENGINEERING", "Sanitize Inputs & Validate Every Payload", "🔒 Core Security Practice")
 ]
@@ -96,6 +95,7 @@ def push_to_buffer():
     post = generate_generative_post()
     generate_tech_image(post["title"], post["subtitle"])
     
+    # Updated mutation schema matching Buffer's expected CreatePostInput fields
     mutation = """
     mutation CreatePost($input: CreatePostInput!) {
         createPost(input: $input) {
@@ -127,7 +127,6 @@ def push_to_buffer():
             "query": mutation,
             "variables": {
                 "input": {
-                    "organizationId": ORGANIZATION_ID,
                     "channelId": channel_id,
                     "text": post["text"],
                     "mode": "addToQueue",
