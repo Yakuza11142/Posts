@@ -1,7 +1,7 @@
 name: Get Buffer IDs
 
 on:
-  workflow_dispatch: # Allows you to run it manually from the GitHub Actions tab
+  workflow_dispatch:
 
 jobs:
   fetch-ids:
@@ -27,9 +27,9 @@ jobs:
           url = "https://api.buffer.com"
           headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
-          # 1. Fetch Organizations
-          org_query = """
-          query {
+          # Query to fetch organizations via account
+          query = """
+          {
             account {
               organizations {
                 id
@@ -38,17 +38,17 @@ jobs:
             }
           }
           """
-          org_res = requests.post(url, json={"query": org_query}, headers=headers).json()
-          print("--- ORGANIZATIONS ---")
-          print(org_res)
+
+          response = requests.post(url, json={"query": query}, headers=headers).json()
+          print("API Response (Organizations):", response)
 
           try:
-              orgs = org_res["data"]["account"]["organizations"]
+              orgs = response["data"]["account"]["organizations"]
               for org in orgs:
                   org_id = org["id"]
-                  print(f"\n👉 BUFFER_ORG_ID: {org_id} ({org[\"name\"]})")
-
-                  # 2. Fetch Channels for this Organization
+                  print(f"\n👉 FOUND BUFFER_ORG_ID: {org_id} (Organization: {org[\"name\"]})")
+                  
+                  # Query to fetch channels for each organization
                   chan_query = """
                   query GetChannels($orgId: ID!) {
                     channels(input: { organizationId: $orgId }) {
@@ -59,8 +59,11 @@ jobs:
                   }
                   """
                   chan_res = requests.post(url, json={"query": chan_query, "variables": {"orgId": org_id}}, headers=headers).json()
-                  print(f"--- CHANNELS FOR {org_id} ---")
-                  print(chan_res)
+                  print(f"API Response (Channels for {org_id}):", chan_res)
+                  
+                  channels = chan_res["data"]["channels"]
+                  for ch in channels:
+                      print(f"   📱 FOUND BUFFER_CHANNEL_ID: {ch[\"id\"]} (Channel: {ch[\"name\"]} - {ch[\"service\"].upper()})")
           except Exception as e:
-              print("❌ Could not parse organizations/channels automatically. Check raw json above.")
+              print("❌ Error processing response data. Check the full JSON output above.")
           '
