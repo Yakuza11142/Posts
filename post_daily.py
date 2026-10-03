@@ -1,7 +1,9 @@
 import os
 import requests
 import random
+import subprocess
 from PIL import Image, ImageDraw
+import imageio.v3 as iio
 
 # API Configuration and Environment Endpoints
 BUFFER_API_URL = "https://api.buffer.com"
@@ -68,25 +70,45 @@ def generate_generative_post():
         "subtitle": subtitle
     }
 
-def generate_tech_image(title, subtitle):
+def generate_assets(title, subtitle):
+    """Generates the PNG card and a 3-second MP4 video for YouTube Shorts."""
+    # 1. Generate Image Card
     img = Image.new("RGB", (1080, 1080), color="#0F172A")
     draw = ImageDraw.Draw(img)
-    
     draw.rectangle([40, 40, 1040, 1040], outline="#3B82F6", width=4)
-    
     draw.text((80, 200), "GENERATIVE TECH INSIGHTS", fill="#94A3B8")
     draw.text((80, 300), title[:25], fill="#FFFFFF")
     draw.text((80, 420), subtitle[:35], fill="#38BDF8")
     
-    image_path = "tech_post_image.png"
+    image_path = "tech_asset.png"
     img.save(image_path)
-    return image_path
+
+    # 2. Convert Image to a 3-second MP4 video for YouTube Shorts
+    video_path = "tech_asset.mp4"
+    frame = iio.imread(image_path)
+    # Write 90 frames (3 seconds at 30fps)
+    iio.imwrite(video_path, [frame] * 90, fps=30, plugin="pyav")
+    
+    return image_path, video_path
+
+def commit_and_push_assets():
+    """Commits and pushes generated assets to GitHub to get permanent public raw URLs."""
+    subprocess.run(["git", "config", "--global", "user.name", "github-actions[bot]"], check=True)
+    subprocess.run(["git", "config", "--global", "user.email", "github-actions[bot]@users.noreply.github.com"], check=True)
+    subprocess.run(["git", "add", "tech_asset.png", "tech_asset.mp4"], check=True)
+    subprocess.run(["git", "commit", "-m", "chore: update automated post assets [skip ci]"], check=True)
+    subprocess.run(["git", "push"], check=True)
+    
+    repo = os.getenv("GITHUB_REPOSITORY")
+    image_url = f"https://raw.githubusercontent.com/{repo}/main/tech_asset.png"
+    video_url = f"https://raw.githubusercontent.com/{repo}/main/tech_asset.mp4"
+    return image_url, video_url
 
 def push_to_buffer():
     post = generate_generative_post()
-    generate_tech_image(post["title"], post["subtitle"])
+    generate_assets(post["title"], post["subtitle"])
+    image_url, video_url = commit_and_push_assets()
     
-    # GraphQL mutation matching Buffer's required schema fields
     mutation = """
     mutation CreatePost($input: CreatePostInput!) {
         createPost(input: $input) {
@@ -113,14 +135,25 @@ def push_to_buffer():
     }
 
     for channel_id in CHANNEL_IDS:
+        # Determine if channel is YouTube (using video) vs X/LinkedIn (using image)
+        # Note: You can check channel ID or apply video to all if Buffer supports it
+        is_youtube = channel_id == os.getenv("BUFFER_YT_CHANNEL_ID")
+        asset_type = "video" if is_youtube else "image"
+        asset_url = video_url if is_youtube else image_url
+
         payload = {
             "query": mutation,
             "variables": {
                 "input": {
                     "channelId": channel_id,
                     "text": post["text"],
-                    "mode": "shareNow",              # Forces immediate publishing
-                    "schedulingType": "automatic"    # Required by Buffer's schema
+                    "mode": "shareNow",
+                    "schedulingType": "automatic",
+                    "assets": [{
+                        asset_type: {
+                            "url": asset_url
+                        }
+                    }]
                 }
             }
         }
