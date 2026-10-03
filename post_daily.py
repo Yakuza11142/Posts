@@ -8,78 +8,81 @@ BUFFER_API_KEY = os.getenv("BUFFER_API_KEY")
 ORGANIZATION_ID = os.getenv("BUFFER_ORG_ID")  
 CHANNEL_ID = os.getenv("BUFFER_CHANNEL_ID")    
 
-# Expanding pool of professional tech insights
-TECH_POSTS = [
-    {
-        "text": (
-            "💡 Software Architecture Tip:\n\n"
-            "Decoupling your UI layer from core business logic ensures maximum "
-            "maintainability and smooth state management. Keep your code modular!\n\n"
-            "#SoftwareEngineering #CleanCode #MobileDev #Programming"
-        ),
-        "title": "CLEAN ARCHITECTURE",
-        "subtitle": "Decouple UI from Business Logic"
-    },
-    {
-        "text": (
-            "⚙️ Systems & Performance:\n\n"
-            "Low-level memory management and efficient compilation pipelines play "
-            "a massive role in optimizing performance-critical applications.\n\n"
-            "#SystemsProgramming #Performance #Coding #Tech"
-        ),
-        "title": "SYSTEMS ENGINEERING",
-        "subtitle": "Optimize Before You Scale"
-    },
-    {
-        "text": (
-            "🚀 Developer Workflow Insight:\n\n"
-            "Automating your CI/CD build pipelines with GitHub Actions saves countless "
-            "hours and catches bugs before they hit production.\n\n"
-            "#DevOps #Automation #GitHubActions #Developer"
-        ),
-        "title": "CI/CD PIPELINES",
-        "subtitle": "Automate Build & Deployment"
-    },
-    {
-        "text": (
-            "📱 Modern UI/UX Engineering:\n\n"
-            "An intuitive user interface relies on fluid responsiveness, precise vector "
-            "rendering, and predictable state transitions across every screen size.\n\n"
-            "#UIUX #CrossPlatform #AppDevelopment #Flutter"
-        ),
-        "title": "UI/UX ENGINEERING",
-        "subtitle": "Fluid Cross-Platform Design"
-    }
+# Generative building blocks to create endless unique developer posts
+DOMAINS = [
+    ("SOFTWARE ARCHITECTURE", "Decouple UI from Business Logic", "💡 Software Architecture Insight"),
+    ("SYSTEMS ENGINEERING", "Optimize Memory Before You Scale", "⚙️ Systems & Performance"),
+    ("CI/CD PIPELINES", "Automate Builds to Ship Faster", "🚀 DevOps Workflow"),
+    ("UI/UX & STATE DIFFS", "Ensure Fluid Visual Transitions", "📱 Modern Frontend Design"),
+    ("CLOUD INFRASTRUCTURE", "Design for High Availability & Fault Tolerance", "☁️ Cloud Architecture"),
+    ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🗄️ Backend Performance"),
+    ("STATE MANAGEMENT", "Keep Data Flow Predictable & Traceable", "🔄 Application Architecture"),
+    ("SECURITY ENGINEERING", "Sanitize Inputs & Validate Every Payload", "🔒 Core Security Practice")
 ]
 
+TIPS = [
+    "Modular codebases reduce technical debt and make cross-platform scaling seamless.",
+    "Low-level resource handling prevents memory leaks in performance-critical loops.",
+    "Automated testing pipelines catch regression bugs before they ever reach production environments.",
+    "Clean state transitions and reactive UI updates drastically improve user retention.",
+    "Decentralized micro-services require strict contract testing and robust error boundaries."
+]
+
+HASHTAG_POOLS = [
+    "#SoftwareEngineering #CleanCode #MobileDev #Programming",
+    "#SystemsProgramming #Performance #Coding #TechStack",
+    "#DevOps #Automation #GitHubActions #DeveloperLife",
+    "#UIUX #CrossPlatform #AppDevelopment #Flutter",
+    "#CloudComputing #Backend #Scalability #Architecture"
+]
+
+def generate_generative_post():
+    """Algorithmic combination engine to generate a completely unique post every run."""
+    domain, subtitle, prefix = random.choice(DOMAINS)
+    tip = random.choice(TIPS)
+    tags = random.choice(HASHTAG_POOLS)
+    
+    text_content = (
+        f"{prefix}:\n\n"
+        f"{tip}\n\n"
+        f"Key Focus: {subtitle}\n\n"
+        f"{tags}"
+    )
+    
+    return {
+        "text": text_content,
+        "title": domain,
+        "subtitle": subtitle
+    }
+
 def generate_tech_image(title, subtitle):
-    """Programmatically generates a clean, dark-mode tech graphic card."""
+    """Programmatically renders the generated text onto a dark-mode tech graphic card."""
     img = Image.new("RGB", (1080, 1080), color="#0F172A") 
     draw = ImageDraw.Draw(img)
     
     # Draw a stylish accent border frame
     draw.rectangle([40, 40, 1040, 1040], outline="#3B82F6", width=4)
     
-    # Render text layout onto the graphic card
-    draw.text((80, 200), "EXPERT TECH INSIGHTS", fill="#94A3B8")
-    draw.text((80, 300), title, fill="#FFFFFF")
-    draw.text((80, 420), subtitle, fill="#38BDF8")
+    # Render layout text onto the graphic card
+    draw.text((80, 200), "GENERATIVE TECH INSIGHTS", fill="#94A3B8")
+    draw.text((80, 300), title[:25], fill="#FFFFFF") # Truncate if too long
+    draw.text((80, 420), subtitle[:35], fill="#38BDF8")
     
     image_path = "tech_post_image.png"
     img.save(image_path)
     return image_path
 
 def push_to_buffer():
-    selected_post = random.choice(TECH_POSTS)
-    generate_tech_image(selected_post["title"], selected_post["subtitle"])
+    post = generate_generative_post()
+    generate_tech_image(post["title"], post["subtitle"])
     
     mutation = """
     mutation CreatePost($input: CreatePostInput!) {
         createPost(input: $input) {
-            ... on Post {
-                id
-                text
-                status
+            __typename
+            ... on PostActionPayload {
+                success
+                message
             }
         }
     }
@@ -91,7 +94,7 @@ def push_to_buffer():
             "input": {
                 "organizationId": ORGANIZATION_ID,
                 "channelId": CHANNEL_ID,
-                "text": selected_post["text"],
+                "text": post["text"],
                 "mode": "addToQueue"
             }
         }
@@ -107,7 +110,8 @@ def push_to_buffer():
     if response.status_code == 200:
         result = response.json()
         if "errors" not in result:
-            print("Successfully queued daily tech post in Buffer!")
+            print("Successfully queued generative tech post in Buffer!")
+            print(result)
         else:
             print(f"GraphQL Error: {result['errors']}")
     else:
