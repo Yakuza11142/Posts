@@ -14,7 +14,7 @@ DOMAINS = [
     ("SYSTEMS ENGINEERING", "Optimize Memory Before You Scale", "⚙️ Systems & Performance"),
     ("CI/CD PIPELINES", "Automate Builds to Ship Faster", "🚀 DevOps Workflow"),
     ("UI/UX & STATE DIFFS", "Ensure Fluid Visual Transitions", "📱 Modern Frontend Design"),
-    ("CLOUD INFRASTRUCTURE", "Design for High Availability & Fault Tolerance", "☁️ Cloud Architecture"),
+    ("CLOUD INFRASTRUCTURE", "Design for High Availability & Fault Tolerance", "☁️️ Cloud Architecture"),
     ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🗄️ Backend Performance"),
     ("STATE MANAGEMENT", "Keep Data Flow Predictable & Traceable", "🔄 Application Architecture"),
     ("SECURITY ENGINEERING", "Sanitize Inputs & Validate Every Payload", "🔒 Core Security Practice")
@@ -37,7 +37,6 @@ HASHTAG_POOLS = [
 ]
 
 def generate_generative_post():
-    """Algorithmic combination engine to generate a completely unique post every run."""
     domain, subtitle, prefix = random.choice(DOMAINS)
     tip = random.choice(TIPS)
     tags = random.choice(HASHTAG_POOLS)
@@ -56,16 +55,13 @@ def generate_generative_post():
     }
 
 def generate_tech_image(title, subtitle):
-    """Programmatically renders the generated text onto a dark-mode tech graphic card."""
     img = Image.new("RGB", (1080, 1080), color="#0F172A") 
     draw = ImageDraw.Draw(img)
     
-    # Draw a stylish accent border frame
     draw.rectangle([40, 40, 1040, 1040], outline="#3B82F6", width=4)
     
-    # Render layout text onto the graphic card
     draw.text((80, 200), "GENERATIVE TECH INSIGHTS", fill="#94A3B8")
-    draw.text((80, 300), title[:25], fill="#FFFFFF") # Truncate if too long
+    draw.text((80, 300), title[:25], fill="#FFFFFF")
     draw.text((80, 420), subtitle[:35], fill="#38BDF8")
     
     image_path = "tech_post_image.png"
@@ -76,12 +72,23 @@ def push_to_buffer():
     post = generate_generative_post()
     generate_tech_image(post["title"], post["subtitle"])
     
+    # Updated mutation with correct Buffer schema error fragments
     mutation = """
     mutation CreatePost($input: CreatePostInput!) {
         createPost(input: $input) {
             __typename
             ... on PostActionPayload {
-                success
+                post {
+                    id
+                }
+            }
+            ... on MutationError {
+                message
+            }
+            ... on InvalidInputError {
+                message
+            }
+            ... on LimitReachedError {
                 message
             }
         }
