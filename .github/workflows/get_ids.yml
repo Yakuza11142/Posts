@@ -27,7 +27,6 @@ jobs:
           url = "https://api.buffer.com"
           headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
-          # Query to fetch organizations via account
           query = """
           {
             account {
@@ -46,9 +45,9 @@ jobs:
               orgs = response["data"]["account"]["organizations"]
               for org in orgs:
                   org_id = org["id"]
-                  print(f"\n👉 FOUND BUFFER_ORG_ID: {org_id} (Organization: {org[\"name\"]})")
+                  org_name = org["name"]
+                  print("\n👉 FOUND BUFFER_ORG_ID:", org_id, "(Organization:", org_name, ")")
                   
-                  # Query to fetch channels for each organization
                   chan_query = """
                   query GetChannels($orgId: ID!) {
                     channels(input: { organizationId: $orgId }) {
@@ -59,11 +58,11 @@ jobs:
                   }
                   """
                   chan_res = requests.post(url, json={"query": chan_query, "variables": {"orgId": org_id}}, headers=headers).json()
-                  print(f"API Response (Channels for {org_id}):", chan_res)
+                  print("API Response (Channels for " + org_id + "):", chan_res)
                   
                   channels = chan_res["data"]["channels"]
                   for ch in channels:
-                      print(f"   📱 FOUND BUFFER_CHANNEL_ID: {ch[\"id\"]} (Channel: {ch[\"name\"]} - {ch[\"service\"].upper()})")
+                      print("   📱 FOUND BUFFER_CHANNEL_ID:", ch["id"], "(Channel:", ch["name"], "-", ch["service"].upper(), ")")
           except Exception as e:
               print("❌ Error processing response data. Check the full JSON output above.")
           '
