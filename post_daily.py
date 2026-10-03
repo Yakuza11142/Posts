@@ -31,7 +31,7 @@ DOMAINS = [
     ("CI/CD PIPELINES", "Automate Builds to Ship Faster", "🚀 DevOps Workflow"),
     ("UI/UX & STATE DIFFS", "Ensure Fluid Visual Transitions", "📱 Modern Frontend Design"),
     ("CLOUD INFRASTRUCTURE", "Design for High Availability & Fault Tolerance", "☁️ Cloud Architecture"),
-    ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🗄 Backend Performance"),
+    ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🄲 Backend Performance"),
     ("STATE MANAGEMENT", "Keep Data Flow Predictable & Traceable", "🔄 Application Architecture"),
     ("SECURITY ENGINEERING", "Sanitize Inputs & Validate Every Payload", "🔒 Core Security Practice")
 ]
@@ -83,11 +83,11 @@ def generate_assets(title, subtitle):
     image_path = "tech_asset.png"
     img.save(image_path)
 
-    # 2. Convert Image to a 3-second MP4 video for YouTube Shorts
+    # 2. Convert Image to a 3-second MP4 video for YouTube Shorts using FFMPEG plugin
     video_path = "tech_asset.mp4"
     frame = iio.imread(image_path)
     # Write 90 frames (3 seconds at 30fps)
-    iio.imwrite(video_path, [frame] * 90, fps=30, plugin="pyav")
+    iio.imwrite(video_path, [frame] * 90, fps=30, plugin="FFMPEG")
     
     return image_path, video_path
 
@@ -135,8 +135,6 @@ def push_to_buffer():
     }
 
     for channel_id in CHANNEL_IDS:
-        # Determine if channel is YouTube (using video) vs X/LinkedIn (using image)
-        # Note: You can check channel ID or apply video to all if Buffer supports it
         is_youtube = channel_id == os.getenv("BUFFER_YT_CHANNEL_ID")
         asset_type = "video" if is_youtube else "image"
         asset_url = video_url if is_youtube else image_url
