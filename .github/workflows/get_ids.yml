@@ -48,8 +48,9 @@ jobs:
                   org_name = org["name"]
                   print("\n👉 FOUND BUFFER_ORG_ID:", org_id, "(Organization:", org_name, ")")
                   
+                  # Updated type to OrganizationId! to match Buffer schema
                   chan_query = """
-                  query GetChannels($orgId: ID!) {
+                  query GetChannels($orgId: OrganizationId!) {
                     channels(input: { organizationId: $orgId }) {
                       id
                       name
