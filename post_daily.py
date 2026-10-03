@@ -14,8 +14,8 @@ DOMAINS = [
     ("SYSTEMS ENGINEERING", "Optimize Memory Before You Scale", "⚙️ Systems & Performance"),
     ("CI/CD PIPELINES", "Automate Builds to Ship Faster", "🚀 DevOps Workflow"),
     ("UI/UX & STATE DIFFS", "Ensure Fluid Visual Transitions", "📱 Modern Frontend Design"),
-    ("CLOUD INFRASTRUCTURE", "Design for High Availability & Fault Tolerance", "☁️️ Cloud Architecture"),
-    ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🗄️ Backend Performance"),
+    ("CLOUD INFRASTRUCTURE", "Design for High Availability & Fault Tolerance", "☁️ Cloud Architecture"),
+    ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🗄️️ Backend Performance"),
     ("STATE MANAGEMENT", "Keep Data Flow Predictable & Traceable", "🔄 Application Architecture"),
     ("SECURITY ENGINEERING", "Sanitize Inputs & Validate Every Payload", "🔒 Core Security Practice")
 ]
@@ -72,15 +72,12 @@ def push_to_buffer():
     post = generate_generative_post()
     generate_tech_image(post["title"], post["subtitle"])
     
-    # Updated mutation with correct Buffer schema error fragments
     mutation = """
     mutation CreatePost($input: CreatePostInput!) {
         createPost(input: $input) {
             __typename
-            ... on PostActionPayload {
-                post {
-                    id
-                }
+            ... on PostActionSuccess {
+                success
             }
             ... on MutationError {
                 message
