@@ -5,17 +5,17 @@ from PIL import Image, ImageDraw
 
 BUFFER_API_URL = "https://api.buffer.com"
 BUFFER_API_KEY = os.getenv("BUFFER_API_KEY")
-PROFILE_ID = os.getenv("BUFFER_ORG_ID")  
+ORGANIZATION_ID = os.getenv("BUFFER_ORG_ID")  
 CHANNEL_ID = os.getenv("BUFFER_CHANNEL_ID")    
 
 # Generative building blocks to create endless unique developer posts
 DOMAINS = [
     ("SOFTWARE ARCHITECTURE", "Decouple UI from Business Logic", "💡 Software Architecture Insight"),
-    ("SYSTEMS ENGINEERING", "Optimize Memory Before You Scale", "⚙️️ Systems & Performance"),
+    ("SYSTEMS ENGINEERING", "Optimize Memory Before You Scale", "⚙️ Systems & Performance"),
     ("CI/CD PIPELINES", "Automate Builds to Ship Faster", "🚀 DevOps Workflow"),
     ("UI/UX & STATE DIFFS", "Ensure Fluid Visual Transitions", "📱 Modern Frontend Design"),
     ("CLOUD INFRASTRUCTURE", "Design for High Availability & Fault Tolerance", "☁️ Cloud Architecture"),
-    ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🗄️ Backend Performance"),
+    ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🗄️️ Backend Performance"),
     ("STATE MANAGEMENT", "Keep Data Flow Predictable & Traceable", "🔄 Application Architecture"),
     ("SECURITY ENGINEERING", "Sanitize Inputs & Validate Every Payload", "🔒 Core Security Practice")
 ]
@@ -96,7 +96,7 @@ def push_to_buffer():
         "query": mutation,
         "variables": {
             "input": {
-                "profileId": PROFILE_ID,
+                "organizationId": ORGANIZATION_ID,
                 "channelId": CHANNEL_ID,
                 "text": post["text"],
                 "mode": "addToQueue",
