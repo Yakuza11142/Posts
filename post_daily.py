@@ -9,15 +9,23 @@ BUFFER_API_KEY = os.getenv("BUFFER_API_KEY")
 ORGANIZATION_ID = os.getenv("BUFFER_ORG_ID")  
 
 # Collect all three channel IDs from your GitHub Secrets into a list for looping
-CHANNEL_IDS = [
+channel_ids_env = [
     os.getenv("BUFFER_YT_CHANNEL_ID"),
     os.getenv("BUFFER_TWITTER_CHANNEL_ID"),
     os.getenv("BUFFER_LINKEDIN_CHANNEL_ID")
 ]
+# Filter out any empty values
+CHANNEL_IDS = [cid for cid in channel_ids_env if cid]
 
-# Fail-safe validation check: Stops execution immediately if any secret is missing
-if not BUFFER_API_KEY or not ORGANIZATION_ID or not all(CHANNEL_IDS):
-    raise ValueError("❌ Missing GitHub Secrets! Ensure BUFFER_API_KEY, BUFFER_ORG_ID, and all three CHANNEL_IDs are added.")
+# Fallback check if individual channel secrets weren't used, check for single BUFFER_CHANNEL_ID
+if not CHANNEL_IDS:
+    single_channel = os.getenv("BUFFER_CHANNEL_ID")
+    if single_channel:
+        CHANNEL_IDS = [single_channel]
+
+# Fail-safe validation check: Stops execution immediately if any core secret is missing
+if not BUFFER_API_KEY or not ORGANIZATION_ID or not CHANNEL_IDS:
+    raise ValueError("❌ Missing GitHub Secrets! Ensure BUFFER_API_KEY, BUFFER_ORG_ID, and Channel IDs are properly configured.")
 
 # Generative text blocks to create unique developer content every run
 DOMAINS = [
@@ -26,7 +34,7 @@ DOMAINS = [
     ("CI/CD PIPELINES", "Automate Builds to Ship Faster", "🚀 DevOps Workflow"),
     ("UI/UX & STATE DIFFS", "Ensure Fluid Visual Transitions", "📱 Modern Frontend Design"),
     ("CLOUD INFRASTRUCTURE", "Design for High Availability & Fault Tolerance", "☁️ Cloud Architecture"),
-    ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🗄️ Backend Performance"),
+    ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🗄️️ Backend Performance"),
     ("STATE MANAGEMENT", "Keep Data Flow Predictable & Traceable", "🔄 Application Architecture"),
     ("SECURITY ENGINEERING", "Sanitize Inputs & Validate Every Payload", "🔒 Core Security Practice")
 ]
