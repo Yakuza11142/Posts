@@ -1,16 +1,18 @@
-name: Daily Tech Social Poster
+name: Autonomous Tech Content Pipeline
 
 on:
   schedule:
-    # Runs every day automatically at 08:00 UTC
-    - cron: '0 8 * * *'
-  workflow_dispatch: # Allows you to trigger it manually anytime from GitHub
+    # 1st Run: 10:00 AM UTC (Global Morning Peak: Europe, Africa, & Early Americas)
+    - cron: '0 10 * * *'
+    # 2nd Run: 6:00 PM UTC (Global Evening/Mid-day Peak: Europe, Africa, & Americas)
+    - cron: '0 18 * * *'
+  workflow_dispatch: # Allows manual trigger anytime from GitHub Mobile
 
 jobs:
-  run-poster:
+  publish-daily-content:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -19,13 +21,13 @@ jobs:
           python-version: '3.10'
 
       - name: Install Dependencies
-        run: |
-          pip install requests Pillow
+        run: pip install requests pillow
 
-      - name: Run Daily Poster Script
+      - name: Execute Autonomous Posting Pipeline
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
           BUFFER_ORG_ID: ${{ secrets.BUFFER_ORG_ID }}
-          BUFFER_CHANNEL_ID: ${{ secrets.BUFFER_CHANNEL_ID }}
-        run: |
-          python post_daily.py
+          BUFFER_YT_CHANNEL_ID: ${{ secrets.BUFFER_YT_CHANNEL_ID }}
+          BUFFER_TWITTER_CHANNEL_ID: ${{ secrets.BUFFER_TWITTER_CHANNEL_ID }}
+          BUFFER_LINKEDIN_CHANNEL_ID: ${{ secrets.BUFFER_LINKEDIN_CHANNEL_ID }}
+        run: python post_daily.py
