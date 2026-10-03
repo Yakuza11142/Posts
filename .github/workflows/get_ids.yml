@@ -25,27 +25,42 @@ jobs:
 
           api_key = os.getenv("BUFFER_API_KEY")
           url = "https://api.buffer.com"
-          
-          query = """
-          {
-            organizations {
-              id
-              name
-              channels {
+          headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+
+          # 1. Fetch Organizations
+          org_query = """
+          query {
+            account {
+              organizations {
                 id
                 name
-                service
               }
             }
           }
           """
+          org_res = requests.post(url, json={"query": org_query}, headers=headers).json()
+          print("--- ORGANIZATIONS ---")
+          print(org_res)
 
-          response = requests.post(
-              url,
-              json={"query": query},
-              headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-          )
+          try:
+              orgs = org_res["data"]["account"]["organizations"]
+              for org in orgs:
+                  org_id = org["id"]
+                  print(f"\n👉 BUFFER_ORG_ID: {org_id} ({org[\"name\"]})")
 
-          print("API Response:")
-          print(response.json())
+                  # 2. Fetch Channels for this Organization
+                  chan_query = """
+                  query GetChannels($orgId: ID!) {
+                    channels(input: { organizationId: $orgId }) {
+                      id
+                      name
+                      service
+                    }
+                  }
+                  """
+                  chan_res = requests.post(url, json={"query": chan_query, "variables": {"orgId": org_id}}, headers=headers).json()
+                  print(f"--- CHANNELS FOR {org_id} ---")
+                  print(chan_res)
+          except Exception as e:
+              print("❌ Could not parse organizations/channels automatically. Check raw json above.")
           '
