@@ -13,20 +13,16 @@ channel_ids_env = [
     os.getenv("BUFFER_TWITTER_CHANNEL_ID"),
     os.getenv("BUFFER_LINKEDIN_CHANNEL_ID")
 ]
-# Filter out any empty values
 CHANNEL_IDS = [cid for cid in channel_ids_env if cid]
 
-# Fallback check if individual channel secrets weren't used, check for single BUFFER_CHANNEL_ID
 if not CHANNEL_IDS:
     single_channel = os.getenv("BUFFER_CHANNEL_ID")
     if single_channel:
         CHANNEL_IDS = [single_channel]
 
-# Fail-safe validation check: Stops execution immediately if core credentials are missing
 if not BUFFER_API_KEY or not CHANNEL_IDS:
     raise ValueError("❌ Missing GitHub Secrets! Ensure BUFFER_API_KEY and Channel IDs are properly configured.")
 
-# Generative text blocks to create unique developer content every run
 DOMAINS = [
     ("SOFTWARE ARCHITECTURE", "Decouple UI from Business Logic", "💡 Software Architecture Insight"),
     ("SYSTEMS ENGINEERING", "Optimize Memory Before You Scale", "⚙️ Systems & Performance"),
@@ -55,7 +51,6 @@ HASHTAG_POOLS = [
 ]
 
 def generate_generative_post():
-    """Randomly selects and pieces together a unique tech post combination."""
     domain, subtitle, prefix = random.choice(DOMAINS)
     tip = random.choice(TIPS)
     tags = random.choice(HASHTAG_POOLS)
@@ -74,14 +69,11 @@ def generate_generative_post():
     }
 
 def generate_tech_image(title, subtitle):
-    """Draws a clean, dark-mode 1080x1080 graphic card with Pillow for social media rendering."""
-    img = Image.new("RGB", (1080, 1080), color="#0F172A") # Deep Slate background
+    img = Image.new("RGB", (1080, 1080), color="#0F172A")
     draw = ImageDraw.Draw(img)
     
-    # Draw accent border frame
     draw.rectangle([40, 40, 1040, 1040], outline="#3B82F6", width=4)
     
-    # Render typography fields
     draw.text((80, 200), "GENERATIVE TECH INSIGHTS", fill="#94A3B8")
     draw.text((80, 300), title[:25], fill="#FFFFFF")
     draw.text((80, 420), subtitle[:35], fill="#38BDF8")
@@ -91,11 +83,10 @@ def generate_tech_image(title, subtitle):
     return image_path
 
 def push_to_buffer():
-    """Builds the post, generates the image asset, and broadcasts via GraphQL mutation to all channels."""
     post = generate_generative_post()
     generate_tech_image(post["title"], post["subtitle"])
     
-    # Updated mutation schema matching Buffer's expected CreatePostInput fields
+    # Updated mutation to handle immediate sharing and media attachment
     mutation = """
     mutation CreatePost($input: CreatePostInput!) {
         createPost(input: $input) {
@@ -121,7 +112,6 @@ def push_to_buffer():
         "Content-Type": "application/json"
     }
 
-    # Loop through each platform's channel ID and queue the post independently
     for channel_id in CHANNEL_IDS:
         payload = {
             "query": mutation,
@@ -129,8 +119,10 @@ def push_to_buffer():
                 "input": {
                     "channelId": channel_id,
                     "text": post["text"],
-                    "mode": "addToQueue",
-                    "schedulingType": "automatic"
+                    "mode": "shareNow", # Forces immediate publishing instead of queueing
+                    "media": {
+                        "photo": "tech_post_image.png" # Attaches the generated graphic card
+                    }
                 }
             }
         }
@@ -140,7 +132,7 @@ def push_to_buffer():
         if response.status_code == 200:
             result = response.json()
             if "errors" not in result:
-                print(f"Successfully queued post for Channel ID: {channel_id}")
+                print(f"Successfully published post for Channel ID: {channel_id}")
             else:
                 print(f"GraphQL Error for {channel_id}: {result['errors']}")
         else:
