@@ -1,0 +1,31 @@
+name: Daily Tech Social Poster
+
+on:
+  schedule:
+    # Runs every day automatically at 08:00 UTC
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Allows you to trigger it manually anytime from GitHub
+
+jobs:
+  run-poster:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install requests Pillow
+
+      - name: Run Daily Poster Script
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          BUFFER_ORG_ID: ${{ secrets.BUFFER_ORG_ID }}
+          BUFFER_CHANNEL_ID: ${{ secrets.BUFFER_CHANNEL_ID }}
+        run: |
+          python post_daily.py
