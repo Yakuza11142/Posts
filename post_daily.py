@@ -86,7 +86,7 @@ def push_to_buffer():
     post = generate_generative_post()
     generate_tech_image(post["title"], post["subtitle"])
     
-    # Updated mutation to handle immediate sharing and media attachment
+    # GraphQL mutation matching Buffer's required schema fields
     mutation = """
     mutation CreatePost($input: CreatePostInput!) {
         createPost(input: $input) {
@@ -119,10 +119,8 @@ def push_to_buffer():
                 "input": {
                     "channelId": channel_id,
                     "text": post["text"],
-                    "mode": "shareNow", # Forces immediate publishing instead of queueing
-                    "media": {
-                        "photo": "tech_post_image.png" # Attaches the generated graphic card
-                    }
+                    "mode": "shareNow",              # Forces immediate publishing
+                    "schedulingType": "automatic"    # Required by Buffer's schema
                 }
             }
         }
