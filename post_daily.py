@@ -84,10 +84,9 @@ def generate_assets(title, subtitle):
     image_path = "tech_asset.png"
     img.save(image_path)
 
-    # 2. Convert Image to a 3-second MP4 video for YouTube Shorts using FFMPEG plugin
+    # 2. Convert Image to a 3-second MP4 video for YouTube Shorts
     video_path = "tech_asset.mp4"
     frame = iio.imread(image_path)
-    # Write 90 frames (3 seconds at 30fps)
     iio.imwrite(video_path, [frame] * 90, fps=30, plugin="FFMPEG")
 
     return image_path, video_path
@@ -141,6 +140,8 @@ def push_to_buffer():
 
     for channel_id in CHANNEL_IDS:
         is_youtube = channel_id == os.getenv("BUFFER_YT_CHANNEL_ID")
+        
+        # YouTube gets the video asset; X and LinkedIn get the clean image asset
         asset_type = "video" if is_youtube else "image"
         asset_url = video_url if is_youtube else image_url
 
