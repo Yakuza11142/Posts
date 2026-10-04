@@ -2,6 +2,7 @@ import os
 import requests
 import random
 import subprocess
+import time
 from PIL import Image, ImageDraw
 import imageio.v3 as iio
 
@@ -56,14 +57,14 @@ def generate_generative_post():
     domain, subtitle, prefix = random.choice(DOMAINS)
     tip = random.choice(TIPS)
     tags = random.choice(HASHTAG_POOLS)
-    
+
     text_content = (
         f"{prefix}:\n\n"
         f"{tip}\n\n"
         f"Key Focus: {subtitle}\n\n"
         f"{tags}"
     )
-    
+
     return {
         "text": text_content,
         "title": domain,
@@ -71,15 +72,15 @@ def generate_generative_post():
     }
 
 def generate_assets(title, subtitle):
-    """Generates the PNG card and a 3-second MP4 video for YouTube Shorts."""
-    # 1. Generate Image Card
+    """Generates a clean text card (without bounding boxes) and a 3-second MP4 video."""
+    # 1. Generate Image Card cleanly without outer borders
     img = Image.new("RGB", (1080, 1080), color="#0F172A")
     draw = ImageDraw.Draw(img)
-    draw.rectangle([40, 40, 1040, 1040], outline="#3B82F6", width=4)
-    draw.text((80, 200), "GENERATIVE TECH INSIGHTS", fill="#94A3B8")
-    draw.text((80, 300), title[:25], fill="#FFFFFF")
-    draw.text((80, 420), subtitle[:35], fill="#38BDF8")
     
+    draw.text((80, 220), "GENERATIVE TECH INSIGHTS", fill="#94A3B8")
+    draw.text((80, 320), title[:25], fill="#FFFFFF")
+    draw.text((80, 460), subtitle[:35], fill="#38BDF8")
+
     image_path = "tech_asset.png"
     img.save(image_path)
 
@@ -88,7 +89,7 @@ def generate_assets(title, subtitle):
     frame = iio.imread(image_path)
     # Write 90 frames (3 seconds at 30fps)
     iio.imwrite(video_path, [frame] * 90, fps=30, plugin="FFMPEG")
-    
+
     return image_path, video_path
 
 def commit_and_push_assets():
@@ -98,7 +99,7 @@ def commit_and_push_assets():
     subprocess.run(["git", "add", "tech_asset.png", "tech_asset.mp4"], check=True)
     subprocess.run(["git", "commit", "-m", "chore: update automated post assets [skip ci]"], check=True)
     subprocess.run(["git", "push"], check=True)
-    
+
     repo = os.getenv("GITHUB_REPOSITORY")
     image_url = f"https://raw.githubusercontent.com/{repo}/main/tech_asset.png"
     video_url = f"https://raw.githubusercontent.com/{repo}/main/tech_asset.mp4"
@@ -108,7 +109,11 @@ def push_to_buffer():
     post = generate_generative_post()
     generate_assets(post["title"], post["subtitle"])
     image_url, video_url = commit_and_push_assets()
-    
+
+    # Wait 10 seconds for GitHub's raw CDN to index the new files globally
+    print("Waiting for assets to propagate on GitHub CDN...")
+    time.sleep(10)
+
     mutation = """
     mutation CreatePost($input: CreatePostInput!) {
         createPost(input: $input) {
@@ -128,7 +133,7 @@ def push_to_buffer():
         }
     }
     """
-    
+
     headers = {
         "Authorization": f"Bearer {BUFFER_API_KEY}",
         "Content-Type": "application/json"
@@ -139,25 +144,36 @@ def push_to_buffer():
         asset_type = "video" if is_youtube else "image"
         asset_url = video_url if is_youtube else image_url
 
+        post_input = {
+            "channelId": channel_id,
+            "text": post["text"],
+            "mode": "shareNow",
+            "schedulingType": "automatic",
+            "assets": [{
+                asset_type: {
+                    "url": asset_url
+                }
+            }]
+        }
+
+        # Inject YouTube-specific metadata required by Buffer's API for video uploads
+        if is_youtube:
+            post_input["metadata"] = {
+                "youtube": {
+                    "title": post["title"][:100],
+                    "categoryId": "28"
+                }
+            }
+
         payload = {
             "query": mutation,
             "variables": {
-                "input": {
-                    "channelId": channel_id,
-                    "text": post["text"],
-                    "mode": "shareNow",
-                    "schedulingType": "automatic",
-                    "assets": [{
-                        asset_type: {
-                            "url": asset_url
-                        }
-                    }]
-                }
+                "input": post_input
             }
         }
 
         response = requests.post(BUFFER_API_URL, json=payload, headers=headers)
-        
+
         if response.status_code == 200:
             result = response.json()
             if "errors" not in result:
