@@ -3,7 +3,7 @@ import requests
 import random
 import subprocess
 import time
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import imageio.v3 as iio
 
 # API Configuration and Environment Endpoints
@@ -27,20 +27,20 @@ if not BUFFER_API_KEY or not CHANNEL_IDS:
     raise ValueError("❌ Missing GitHub Secrets! Ensure BUFFER_API_KEY and Channel IDs are properly configured.")
 
 DOMAINS = [
-    ("SOFTWARE ARCHITECTURE", "Decouple UI from Business Logic", "💡 Software Architecture Insight"),
-    ("SYSTEMS ENGINEERING", "Optimize Memory Before You Scale", "⚙️ Systems & Performance"),
-    ("CI/CD PIPELINES", "Automate Builds to Ship Faster", "🚀 DevOps Workflow"),
-    ("UI/UX & STATE DIFFS", "Ensure Fluid Visual Transitions", "📱 Modern Frontend Design"),
-    ("CLOUD INFRASTRUCTURE", "Design for High Availability & Fault Tolerance", "☁️ Cloud Architecture"),
-    ("DATABASE OPTIMIZATION", "Index Queries to Minimize Latency", "🄲 Backend Performance"),
-    ("STATE MANAGEMENT", "Keep Data Flow Predictable & Traceable", "🔄 Application Architecture"),
-    ("SECURITY ENGINEERING", "Sanitize Inputs & Validate Every Payload", "🔒 Core Security Practice")
+    ("SOFTWARE ARCHITECTURE", "Are you decoupling UI from Business Logic correctly?", "💡 Architecture Insight"),
+    ("SYSTEMS ENGINEERING", "Are you optimizing memory before you scale?", "⚙️ Performance & Memory"),
+    ("CI/CD PIPELINES", "Automate your builds to ship faster and safer", "🚀 DevOps Workflow"),
+    ("UI/UX & STATE DIFFS", "Ensure fluid visual transitions across devices", "📱 Modern Frontend Design"),
+    ("CLOUD INFRASTRUCTURE", "Design for high availability and fault tolerance", "☁️ Cloud Architecture"),
+    ("DATABASE OPTIMIZATION", "Index your queries to minimize latency", "🄲 Backend Performance"),
+    ("STATE MANAGEMENT", "Keep data flow predictable and traceable", "🔄 Application Architecture"),
+    ("SECURITY ENGINEERING", "Sanitize inputs and validate every payload", "🔒 Core Security Practice")
 ]
 
 TIPS = [
     "Modular codebases reduce technical debt and make cross-platform scaling seamless.",
     "Low-level resource handling prevents memory leaks in performance-critical loops.",
-    "Automated testing pipelines catch regression bugs before they ever reach production environments.",
+    "Automated testing pipelines catch regression bugs before they ever reach production.",
     "Clean state transitions and reactive UI updates drastically improve user retention.",
     "Decentralized micro-services require strict contract testing and robust error boundaries."
 ]
@@ -72,14 +72,30 @@ def generate_generative_post():
     }
 
 def generate_assets(title, subtitle):
-    """Generates a clean text card (without bounding boxes) and a 3-second MP4 video."""
-    # 1. Generate Image Card cleanly without outer borders
+    """Generates a high-visibility, large-text card and a 3-second MP4 video."""
+    # 1. Generate Image Card cleanly with high-contrast colors and large fonts
     img = Image.new("RGB", (1080, 1080), color="#0F172A")
     draw = ImageDraw.Draw(img)
+
+    # Load fallback-safe fonts with prominent sizing
+    try:
+        font_header = ImageFont.truetype("arial.ttf", 46)
+        font_title = ImageFont.truetype("arial.ttf", 60)
+        font_sub = ImageFont.truetype("arial.ttf", 42)
+        font_footer = ImageFont.truetype("arial.ttf", 36)
+    except IOError:
+        font_header = ImageFont.load_default()
+        font_title = ImageFont.load_default()
+        font_sub = ImageFont.load_default()
+        font_footer = ImageFont.load_default()
+
+    # Draw centered / well-spaced layout elements
+    draw.text((80, 180), "⚡ GENERATIVE TECH INSIGHTS", fill="#38BDF8", font=font_header)
+    draw.text((80, 300), title[:30], fill="#FFFFFF", font=font_title)
+    draw.text((80, 480), subtitle[:45], fill="#94A3B8", font=font_sub)
     
-    draw.text((80, 220), "GENERATIVE TECH INSIGHTS", fill="#94A3B8")
-    draw.text((80, 320), title[:25], fill="#FFFFFF")
-    draw.text((80, 460), subtitle[:35], fill="#38BDF8")
+    # Watermark / Brand handle at the bottom
+    draw.text((80, 920), "@YakubuPeter-o7k2u", fill="#64748B", font=font_footer)
 
     image_path = "tech_asset.png"
     img.save(image_path)
@@ -92,16 +108,25 @@ def generate_assets(title, subtitle):
     return image_path, video_path
 
 def commit_and_push_assets():
-    """Commits and pushes generated assets to GitHub to get permanent public raw URLs."""
+    """Commits and pushes generated assets to GitHub if changes exist, returning raw URLs."""
     subprocess.run(["git", "config", "--global", "user.name", "github-actions[bot]"], check=True)
     subprocess.run(["git", "config", "--global", "user.email", "github-actions[bot]@users.noreply.github.com"], check=True)
     subprocess.run(["git", "add", "tech_asset.png", "tech_asset.mp4"], check=True)
-    subprocess.run(["git", "commit", "-m", "chore: update automated post assets [skip ci]"], check=True)
-    subprocess.run(["git", "push"], check=True)
-
+    
+    # Check if there are staged changes to prevent exit code 1 crash when nothing changes
+    diff_result = subprocess.run(["git", "diff", "--cached", "--quiet"])
+    
     repo = os.getenv("GITHUB_REPOSITORY")
     image_url = f"https://raw.githubusercontent.com/{repo}/main/tech_asset.png"
     video_url = f"https://raw.githubusercontent.com/{repo}/main/tech_asset.mp4"
+
+    if diff_result.returncode == 0:
+        print("ℹ️ No asset changes detected. Skipping commit and push.")
+        return image_url, video_url
+
+    subprocess.run(["git", "commit", "-m", "chore: update automated post assets [skip ci]"], check=True)
+    subprocess.run(["git", "push"], check=True)
+    
     return image_url, video_url
 
 def push_to_buffer():
@@ -140,8 +165,7 @@ def push_to_buffer():
 
     for channel_id in CHANNEL_IDS:
         is_youtube = channel_id == os.getenv("BUFFER_YT_CHANNEL_ID")
-        
-        # YouTube gets the video asset; X and LinkedIn get the clean image asset
+
         asset_type = "video" if is_youtube else "image"
         asset_url = video_url if is_youtube else image_url
 
@@ -157,7 +181,6 @@ def push_to_buffer():
             }]
         }
 
-        # Inject YouTube-specific metadata required by Buffer's API for video uploads
         if is_youtube:
             post_input["metadata"] = {
                 "youtube": {
