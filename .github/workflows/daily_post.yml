@@ -6,18 +6,20 @@ on:
     - cron: '0 10 * * *'
     # 2nd Run: 6:00 PM UTC (7:00 PM WAT)
     - cron: '0 18 * * *'
-  workflow_dispatch: # Allows manual trigger anytime from GitHub Mobile
+  workflow_dispatch: # Allows manual trigger anytime from GitHub Mobile or Web
 
 jobs:
   publish-daily-content:
     runs-on: ubuntu-latest
     permissions:
       contents: write  # Gives the runner permission to push generated assets back to the repo
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           persist-credentials: true
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,8 +32,8 @@ jobs:
       - name: Execute Autonomous Posting Pipeline
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
-          BUFFER_ORG_ID: ${{ secrets.BUFFER_ORG_ID }}
           BUFFER_YT_CHANNEL_ID: ${{ secrets.BUFFER_YT_CHANNEL_ID }}
           BUFFER_TWITTER_CHANNEL_ID: ${{ secrets.BUFFER_TWITTER_CHANNEL_ID }}
           BUFFER_LINKEDIN_CHANNEL_ID: ${{ secrets.BUFFER_LINKEDIN_CHANNEL_ID }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: python post_daily.py
