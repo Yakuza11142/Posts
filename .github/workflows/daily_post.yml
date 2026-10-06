@@ -26,8 +26,13 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Dependencies
-        run: pip install requests pillow imageio imageio-ffmpeg av
+      - name: Install system dependencies (FFmpeg)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Python Packages
+        run: pip install requests pillow imageio imageio-ffmpeg av gtts
 
       - name: Execute Autonomous Posting Pipeline
         env:
