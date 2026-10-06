@@ -7,6 +7,7 @@ import time
 from PIL import Image, ImageDraw, ImageFont
 import imageio.v3 as iio
 import numpy as np
+from gtts import gTTS
 
 # API Configuration and Environment Endpoints
 BUFFER_API_URL = "https://api.buffer.com"
@@ -31,76 +32,76 @@ HISTORY_FILE = "posted_history.json"
 
 DOMAINS = [
     (
-        "SOFTWARE ARCHITECTURE", 
-        "Are you decoupling UI from Business Logic correctly?", 
-        "💡 Architecture Insight",
-        "repository.dart",
-        "// Clean separation of concerns\nclass UserRepository {\n  Future<User> fetchUser() async {\n    return await _apiClient.get();\n  }\n}",
-        "#38BDF8",
-        "🤖 Coach Tip: Keep your display code separate from your data fetching!"
+        "MICROSERVICES & NETWORKING", 
+        "Ensure low-latency service-to-service communication", 
+        "🌐 Distributed Systems",
+        "service.proto",
+        ["syntax = \"proto3\";", "service UserService {", "  rpc GetUser (UserRequest) returns (UserResponse);", "}"],
+        "#8B5CF6",
+        "Protocol buffers serialize data faster than JSON for microservices."
     ),
     (
-        "SYSTEMS ENGINEERING", 
-        "Are you optimizing memory before you scale?", 
-        "⚙️ Performance & Memory",
-        "memory.rs",
-        "unsafe {\n  let ptr = alloc::alloc(layout);\n  ptr::write(ptr, data);\n}",
-        "#4ADE80",
-        "🤖 Coach Tip: Low-level pointers let us manage computer memory directly."
+        "DATABASE SCALING & SHARDING", 
+        "Distribute high-volume traffic across read replicas", 
+        "📈 Database Performance",
+        "pool.sql",
+        ["ALTER SYSTEM SET max_connections = 500;", "CREATE TABLE shards.users_partition OF users", "FOR VALUES FROM (1) TO (100000);"],
+        "#EC4899",
+        "Connection pooling prevents database crashes under heavy loads."
+    ),
+    (
+        "MOBILE STATE PATTERNS", 
+        "Manage reactive UI data streams efficiently", 
+        "📱 Clean Mobile Architecture",
+        "bloc_state.dart",
+        ["class UserBloc extends Bloc<UserEvent, UserState> {", "  UserBloc() : super(UserInitial()) {", "    on<FetchUserEvent>(_onFetch);", "  }", "}"],
+        "#06B6D4",
+        "Predictable state patterns make debugging complex mobile apps easier."
     ),
     (
         "CI/CD PIPELINES", 
         "Automate your builds to ship faster and safer", 
         "🚀 DevOps Workflow",
         "workflow.yml",
-        "name: Production CI\non: [push]\njobs:\n  deploy:\n    runs-on: ubuntu-latest",
+        ["name: Production CI", "on: [push]", "jobs:", "  deploy:", "    runs-on: ubuntu-latest"],
         "#F43F5E",
-        "🤖 Coach Tip: Automation tests your code automatically every time you save!"
-    ),
-    (
-        "UI/UX & STATE DIFFS", 
-        "Ensure fluid visual transitions across devices", 
-        "📱 Modern Frontend Design",
-        "anim_builder.dart",
-        "AnimatedBuilder(\n  animation: _controller,\n  builder: (context, child) => FadeTransition()\n)",
-        "#A855F7",
-        "🤖 Coach Tip: Smooth animations make apps feel alive and fun to use!"
-    ),
-    (
-        "CLOUD INFRASTRUCTURE", 
-        "Design for high availability and fault tolerance", 
-        "☁️ Cloud Architecture",
-        "main.tf",
-        "resource \"aws_lb\" \"ingress\" {\n  internal = false\n  load_balancer_type = \"application\"\n}",
-        "#FB923C",
-        "🤖 Coach Tip: Cloud servers keep apps running even if one computer crashes."
-    ),
-    (
-        "DATABASE OPTIMIZATION", 
-        "Index your queries to minimize latency", 
-        "🄲 Backend Performance",
-        "query.sql",
-        "CREATE INDEX idx_user_metrics \nON accounts(email) \nWHERE status = 'active';",
-        "#34D399",
-        "🤖 Coach Tip: Indexes act like a book table of contents to find data instantly."
-    ),
-    (
-        "STATE MANAGEMENT", 
-        "Keep data flow predictable and traceable", 
-        "🔄 Application Architecture",
-        "notifier.dart",
-        "final userStateProvider = StateProvider<User?>(\n  (ref) => null\n);",
-        "#38BDF8",
-        "🤖 Coach Tip: State providers help track what information your app currently holds."
+        "Automation tests your code automatically every time you save!"
     ),
     (
         "SECURITY ENGINEERING", 
         "Sanitize inputs and validate every payload", 
         "🔒 Core Security Practice",
         "security.rs",
-        "let clean_input = html_escape(input);\nassert!(token.verify_sig(), \"Unauthorized\");",
+        ["let clean_input = html_escape(input);", "assert!(token.verify_sig(), \"Unauthorized\");"],
         "#FACC15",
-        "🤖 Coach Tip: Always clean user inputs to protect your app from hackers!"
+        "Always clean user inputs to protect your app from hackers!"
+    ),
+    (
+        "KUBERNETES DEPLOYMENTS", 
+        "Orchestrate containers for maximum uptime", 
+        "⚙️ Cloud Orchestration",
+        "deployment.yaml",
+        ["apiVersion: apps/v1", "kind: Deployment", "metadata:", "  name: core-service"],
+        "#38BDF8",
+        "Kubernetes automatically restarts crashed application containers!"
+    ),
+    (
+        "API RATE LIMITING", 
+        "Protect backend servers from traffic spikes", 
+        "🛡️ Backend Protection",
+        "ratelimit.go",
+        ["limiter := rate.NewLimiter(10, 30);", "if !limiter.Allow() {", "  return 429", "}"],
+        "#34D399",
+        "Rate limits prevent malicious actors from spamming your API."
+    ),
+    (
+        "DOCKER CONTAINERIZATION", 
+        "Package dependencies for uniform execution", 
+        "🐳 Infrastructure Consistency",
+        "Dockerfile",
+        ["FROM dart:stable AS build", "WORKDIR /app", "COPY . .", "RUN dart compile exe"],
+        "#4ADE80",
+        "Containers ensure your code runs the exact same everywhere."
     )
 ]
 
@@ -136,7 +137,7 @@ def generate_generative_post():
     if not available_domains:
         available_domains = DOMAINS
 
-    domain, subtitle, prefix, filename, code_snippet, accent_color, coach_tip = random.choice(available_domains)
+    domain, subtitle, prefix, filename, code_lines, accent_color, coach_tip = random.choice(available_domains)
     tip = random.choice(TIPS)
     tags = random.choice(HASHTAG_POOLS)
 
@@ -155,7 +156,7 @@ def generate_generative_post():
         "title": domain,
         "subtitle": subtitle,
         "filename": filename,
-        "code": code_snippet,
+        "code_lines": code_lines,
         "accent": accent_color,
         "tip": tip,
         "coach": coach_tip
@@ -164,11 +165,11 @@ def generate_generative_post():
 def get_fonts():
     try:
         return (
-            ImageFont.truetype("arial.ttf", 40),
-            ImageFont.truetype("arial.ttf", 48),
-            ImageFont.truetype("arial.ttf", 34),
-            ImageFont.truetype("DejaVuSansMono.ttf", 28),
-            ImageFont.truetype("arial.ttf", 30)
+            ImageFont.truetype("arial.ttf", 46),
+            ImageFont.truetype("arial.ttf", 62), # Giant headers
+            ImageFont.truetype("arial.ttf", 44), # Big subtitles
+            ImageFont.truetype("DejaVuSansMono.ttf", 36), # Huge code text
+            ImageFont.truetype("arial.ttf", 36)
         )
     except IOError:
         try:
@@ -176,7 +177,7 @@ def get_fonts():
                 ImageFont.load_default(),
                 ImageFont.load_default(),
                 ImageFont.load_default(),
-                ImageFont.truetype("Courier", 28),
+                ImageFont.truetype("Courier", 36),
                 ImageFont.load_default()
             )
         except IOError:
@@ -186,71 +187,90 @@ def get_fonts():
                 ImageFont.load_default()
             )
 
-def generate_assets(title, subtitle, filename, code_snippet, accent_color, tip_text, coach_tip):
-    """Generates an 11-second multi-step animated video sequence featuring Code Coach guidance."""
+def generate_assets(title, subtitle, filename, code_lines, accent_color, tip_text, coach_tip):
+    """Generates an animated sequence with progressive typing and embeds a clear AI voiceover using gTTS and ffmpeg."""
     font_header, font_title, font_sub, font_code, font_footer = get_fonts()
+
+    # --- GENERATE THE VOICE-OVER AUDIO (TTS) ---
+    voice_script = f"Attention developers. Let's master {title}. {coach_tip}"
+    tts = gTTS(text=voice_script, lang='en', slow=False)
+    audio_path = "voice_track.mp3"
+    tts.save(audio_path)
 
     # --- FRAME 1: The Hook & Coach Intro ---
     img1 = Image.new("RGB", (1080, 1080), color="#0B0F19")
     draw1 = ImageDraw.Draw(img1)
-    draw1.text((80, 80), "⚡ GENERATIVE TECH & CODE COACH", fill=accent_color, font=font_header)
-    draw1.text((80, 160), title[:30], fill="#FFFFFF", font=font_title)
-    draw1.text((80, 240), subtitle[:45], fill="#94A3B8", font=font_sub)
-    
-    draw1.rectangle([80, 380, 1000, 750], fill="#1E293B", outline=accent_color, width=2)
-    draw1.text((120, 420), "🧑‍💻 Let's Learn Together!", fill="#38BDF8", font=font_title)
-    draw1.multiline_text((120, 520), coach_tip, fill="#FFFFFF", font=font_sub, spacing=10)
-    draw1.text((80, 930), "@YakubuPeter-o7k2u", fill="#475569", font=font_footer)
+    draw1.text((60, 60), "⚡ TECH & CODE COACH", fill=accent_color, font=font_header)
+    draw1.text((60, 130), title[:26], fill="#FFFFFF", font=font_title)
+    draw1.text((60, 210), subtitle[:40], fill="#94A3B8", font=font_sub)
 
-    # --- FRAME 2: The Terminal Code Solution ---
-    img2 = Image.new("RGB", (1080, 1080), color="#0B0F19")
-    draw2 = ImageDraw.Draw(img2)
-    draw2.text((80, 80), "⚡ GENERATIVE TECH & CODE COACH", fill=accent_color, font=font_header)
-    draw2.text((80, 160), title[:30], fill="#FFFFFF", font=font_title)
-    
-    draw2.rectangle([80, 240, 1000, 820], fill="#111827", outline="#1F2937", width=2)
-    draw2.ellipse([110, 265, 128, 283], fill="#EF4444")
-    draw2.ellipse([140, 265, 158, 283], fill="#F59E0B")
-    draw2.ellipse([170, 265, 188, 283], fill="#10B981")
-    draw2.text((215, 260), f"workspace — {filename}", fill="#64748B", font=font_sub)
-    draw2.multiline_text((110, 330), code_snippet, fill=accent_color, font=font_code, spacing=10)
-    draw2.text((80, 930), "@YakubuPeter-o7k2u", fill="#475569", font=font_footer)
+    draw1.rectangle([60, 340, 1020, 780], fill="#1E293B", outline=accent_color, width=3)
+    draw1.text((100, 380), "🧑‍💻 Let's Learn Together!", fill="#38BDF8", font=font_title)
+    draw1.multiline_text((100, 480), coach_tip, fill="#FFFFFF", font=font_sub, spacing=12)
+    draw1.text((60, 930), "@YakubuPeter-o7k2u", fill="#475569", font=font_footer)
+
+    frame_list = []
+    frame_list.extend([np.array(img1)] * 60) # ~2 seconds hook
+
+    # --- FRAMES 2X: Progressive Line-by-Line Terminal Typing Effect ---
+    current_text_lines = []
+    for line in code_lines:
+        current_text_lines.append(line)
+        partial_code_snippet = "\n".join(current_text_lines)
+
+        img_code = Image.new("RGB", (1080, 1080), color="#0B0F19")
+        draw_code = ImageDraw.Draw(img_code)
+        draw_code.text((60, 60), "⚡ TECH & CODE COACH", fill=accent_color, font=font_header)
+        draw_code.text((60, 130), title[:26], fill="#FFFFFF", font=font_title)
+
+        draw_code.rectangle([60, 220, 1020, 840], fill="#111827", outline="#1F2937", width=3)
+        draw_code.ellipse([90, 245, 110, 265], fill="#EF4444")
+        draw_code.ellipse([120, 245, 140, 265], fill="#F59E0B")
+        draw_code.ellipse([150, 245, 170, 265], fill="#10B981")
+        draw_code.text((195, 238), f"workspace — {filename}", fill="#64748B", font=font_sub)
+        draw_code.multiline_text((90, 310), partial_code_snippet, fill=accent_color, font=font_code, spacing=12)
+        draw_code.text((60, 930), "@YakubuPeter-o7k2u", fill="#475569", font=font_footer)
+
+        img_code.save("tech_asset.png")
+        frame_list.extend([np.array(img_code)] * 35)
 
     # --- FRAME 3: The Core Tip / Takeaway ---
     img3 = Image.new("RGB", (1080, 1080), color="#0B0F19")
     draw3 = ImageDraw.Draw(img3)
-    draw3.text((80, 80), "⚡ GENERATIVE TECH & CODE COACH", fill=accent_color, font=font_header)
-    draw3.text((80, 160), title[:30], fill="#FFFFFF", font=font_title)
-    
-    draw3.rectangle([80, 300, 1000, 720], fill="#1E293B", outline=accent_color, width=2)
-    draw3.text((120, 350), "💡 Engineering Takeaway:", fill="#38BDF8", font=font_title)
-    draw3.multiline_text((120, 450), tip_text[:120], fill="#FFFFFF", font=font_sub, spacing=10)
-    draw3.text((80, 930), "@YakubuPeter-o7k2u", fill="#475569", font=font_footer)
+    draw3.text((60, 60), "⚡ TECH & CODE COACH", fill=accent_color, font=font_header)
+    draw3.text((60, 130), title[:26], fill="#FFFFFF", font=font_title)
 
-    image_path = "tech_asset.png"
-    img2.save(image_path)
+    draw3.rectangle([60, 280, 1020, 780], fill="#1E293B", outline=accent_color, width=3)
+    draw3.text((100, 330), "💡 Engineering Takeaway:", fill="#38BDF8", font=font_title)
+    draw3.multiline_text((100, 430), tip_text[:120], fill="#FFFFFF", font=font_sub, spacing=12)
+    draw3.text((60, 930), "@YakubuPeter-o7k2u", fill="#475569", font=font_footer)
 
-    f_data1 = np.array(img1)
-    f_data2 = np.array(img2)
-    f_data3 = np.array(img3)
+    frame_list.extend([np.array(img3)] * 75) # ~2.5 seconds takeaway
 
-    frame_list = []
-    frame_list.extend([f_data1] * 90)   # Step 1: ~3.0 seconds (Coach Intro)
-    frame_list.extend([f_data2] * 150)  # Step 2: ~5.0 seconds (Code IDE Reading Time)
-    frame_list.extend([f_data3] * 90)   # Step 3: ~3.0 seconds (Takeaway Summary)
+    temp_video_path = "temp_tech_asset.mp4"
+    final_video_path = "tech_asset.mp4"
+    iio.imwrite(temp_video_path, frame_list, fps=30, plugin="FFMPEG")
 
-    video_path = "tech_asset.mp4"
-    iio.imwrite(video_path, frame_list, fps=30, plugin="FFMPEG")
+    merge_cmd = [
+        "ffmpeg", "-y",
+        "-i", temp_video_path,
+        "-i", audio_path,
+        "-c:v", "copy",
+        "-c:a", "aac",
+        "-shortest",
+        final_video_path
+    ]
+    subprocess.run(merge_cmd, check=True)
 
-    return image_path, video_path
+    return "tech_asset.png", final_video_path
 
 def commit_and_push_assets():
     subprocess.run(["git", "config", "--global", "user.name", "github-actions[bot]"], check=True)
     subprocess.run(["git", "config", "--global", "user.email", "github-actions[bot]@users.noreply.github.com"], check=True)
     subprocess.run(["git", "add", "tech_asset.png", "tech_asset.mp4", HISTORY_FILE], check=True)
-    
+
     diff_result = subprocess.run(["git", "diff", "--cached", "--quiet"])
-    
+
     repo = os.getenv("GITHUB_REPOSITORY")
     image_url = f"https://raw.githubusercontent.com/{repo}/main/tech_asset.png"
     video_url = f"https://raw.githubusercontent.com/{repo}/main/tech_asset.mp4"
@@ -259,86 +279,106 @@ def commit_and_push_assets():
         print("ℹ No asset changes detected. Skipping commit and push.")
         return image_url, video_url
 
-    subprocess.run(["git", "commit", "-m", "chore: update coach-guided multi-step assets [skip ci]"], check=True)
+    subprocess.run(["git", "commit", "-m", "chore: update assets with voice narration [skip ci]"], check=True)
     subprocess.run(["git", "push"], check=True)
-    
+
     return image_url, video_url
 
+def cleanup_temp_files():
+    temp_files = ["voice_track.mp3", "temp_tech_asset.mp4"]
+    for file in temp_files:
+        if os.path.exists(file):
+            try:
+                os.remove(file)
+                print(f"🧹 Cleaned up temporary file: {file}")
+            except Exception as e:
+                print(f"⚠️ Could not remove {file}: {e}")
+
 def push_to_buffer():
-    post = generate_generative_post()
-    generate_assets(post["title"], post["subtitle"], post["filename"], post["code"], post["accent"], post["tip"], post["coach"])
-    image_url, video_url = commit_and_push_assets()
+    try:
+        post = generate_generative_post()
+        generate_assets(
+            post["title"], post["subtitle"], post["filename"], 
+            post["code_lines"], post["accent"], post["tip"], post["coach"]
+        )
+        image_url, video_url = commit_and_push_assets()
 
-    print("Waiting for assets to propagate on GitHub CDN...")
-    time.sleep(10)
+        print("Waiting for assets to propagate on GitHub CDN...")
+        time.sleep(10)
 
-    mutation = """
-    mutation CreatePost($input: CreatePostInput!) {
-        createPost(input: $input) {
-            __typename
-            ... on PostActionSuccess {
+        mutation = """
+        mutation CreatePost($input: CreatePostInput!) {
+            createPost(input: $input) {
                 __typename
-            }
-            ... on MutationError {
-                message
-            }
-            ... on InvalidInputError {
-                message
-            }
-            ... on LimitReachedError {
-                message
-            }
-        }
-    }
-    """
-
-    headers = {
-        "Authorization": f"Bearer {BUFFER_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    for channel_id in CHANNEL_IDS:
-        is_youtube = channel_id == os.getenv("BUFFER_YT_CHANNEL_ID")
-        asset_type = "video" if is_youtube else "image"
-        asset_url = video_url if is_youtube else image_url
-
-        post_input = {
-            "channelId": channel_id,
-            "text": post["text"],
-            "mode": "shareNow",
-            "schedulingType": "automatic",
-            "assets": [{
-                asset_type: {
-                    "url": asset_url
+                ... on PostActionSuccess {
+                    __typename
                 }
-            }]
-        }
-
-        if is_youtube:
-            post_input["metadata"] = {
-                "youtube": {
-                    "title": post["title"][:100],
-                    "categoryId": "28"
+                ... on MutationError {
+                    message
+                }
+                ... on InvalidInputError {
+                    message
+                }
+                ... on LimitReachedError {
+                    message
                 }
             }
+        }
+        """
 
-        payload = {
-            "query": mutation,
-            "variables": {
-                "input": post_input
-            }
+        headers = {
+            "Authorization": f"Bearer {BUFFER_API_KEY}",
+            "Content-Type": "application/json"
         }
 
-        response = requests.post(BUFFER_API_URL, json=payload, headers=headers)
+        for channel_id in CHANNEL_IDS:
+            is_youtube = channel_id == os.getenv("BUFFER_YT_CHANNEL_ID")
+            asset_type = "video" if is_youtube else "image"
+            asset_url = video_url if is_youtube else image_url
 
-        if response.status_code == 200:
-            result = response.json()
-            if "errors" not in result:
-                print(f"Successfully published coach-guided post for Channel ID: {channel_id}")
+            post_input = {
+                "channelId": channel_id,
+                "text": post["text"],
+                "mode": "shareNow",
+                "schedulingType": "automatic",
+                "assets": [{
+                    asset_type: {
+                        "url": asset_url
+                    }
+                }]
+            }
+
+            if is_youtube:
+                post_input["metadata"] = {
+                    "youtube": {
+                        "title": post["title"][:100],
+                        "categoryId": "28"
+                    }
+                }
+
+            payload = {
+                "query": mutation,
+                "variables": {
+                    "input": post_input
+                }
+            }
+
+            response = requests.post(BUFFER_API_URL, json=payload, headers=headers)
+
+            if response.status_code == 200:
+                result = response.json()
+                if "errors" not in result:
+                    print(f"Successfully published coach-guided post with voiceover for Channel ID: {channel_id}")
+                else:
+                    print(f"GraphQL Error for {channel_id}: {result['errors']}")
             else:
-                print(f"GraphQL Error for {channel_id}: {result['errors']}")
-        else:
-            print(f"Request Failed for {channel_id}: {response.status_code}, {response.text}")
+                print(f"Request Failed for {channel_id}: {response.status_code}, {response.text}")
+
+    except Exception as e:
+        print(f"❌ Critical error in publishing pipeline: {e}")
+        raise e
+    finally:
+        cleanup_temp_files()
 
 if __name__ == "__main__":
     push_to_buffer()
