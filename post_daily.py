@@ -333,8 +333,16 @@ def push_to_buffer():
 
         for channel_id in CHANNEL_IDS:
             is_youtube = channel_id == os.getenv("BUFFER_YT_CHANNEL_ID")
-            asset_type = "video" if is_youtube else "image"
-            asset_url = video_url if is_youtube else image_url
+            
+            # YouTube, LinkedIn, and X will all receive the high-engagement video asset!
+            is_video_channel = channel_id in [
+                os.getenv("BUFFER_YT_CHANNEL_ID"), 
+                os.getenv("BUFFER_LINKEDIN_CHANNEL_ID"),
+                os.getenv("BUFFER_TWITTER_CHANNEL_ID")
+            ]
+            
+            asset_type = "video" if is_video_channel else "image"
+            asset_url = video_url if is_video_channel else image_url
 
             post_input = {
                 "channelId": channel_id,
@@ -368,7 +376,7 @@ def push_to_buffer():
             if response.status_code == 200:
                 result = response.json()
                 if "errors" not in result:
-                    print(f"Successfully published coach-guided post with voiceover for Channel ID: {channel_id}")
+                    print(f"Successfully published post for Channel ID: {channel_id} (Format: {asset_type})")
                 else:
                     print(f"GraphQL Error for {channel_id}: {result['errors']}")
             else:
