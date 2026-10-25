@@ -117,8 +117,13 @@ HASHTAG_POOLS = [
 
 def load_history():
     if os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE, "r") as f:
-            return json.load(f)
+        try:
+            with open(HISTORY_FILE, "r") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+        except Exception:
+            pass
     return {"last_domain": None, "last_part": 1}
 
 def save_history(history):
@@ -144,7 +149,7 @@ def generate_generative_post():
     tags = random.choice(HASHTAG_POOLS)
 
     part_title_suffix = " (Part 2: Advanced Deep Dive)" if current_part == 2 else " (Part 1)"
-    
+
     text_content = (
         f"⚡ {prefix}{part_title_suffix}\n\n"
         f"💡 {tip}\n\n"
@@ -230,7 +235,7 @@ def generate_assets(title, subtitle, filename, code_lines, accent_color, tip_tex
     draw3.rectangle([60, 280, 1020, 780], fill="#1E293B", outline=accent_color, width=3)
     draw3.text((100, 330), "💡 Core Rule:", fill="#38BDF8", font=font_title)
     draw3.multiline_text((100, 430), tip_text[:120], fill="#FFFFFF", font=font_sub, spacing=12)
-    
+
     cta_text = "👇 Part 2 is live on the channel — Subscribe!" if part_num == 1 else "👇 Drop a comment with your tech stack!"
     draw3.text((100, 650), cta_text, fill="#34D399", font=font_sub)
     draw3.text((60, 930), "@YakubuPeter-o7k2u", fill="#475569", font=font_footer)
