@@ -185,16 +185,17 @@ def get_fonts():
 def generate_assets(title, subtitle, filename, code_lines, accent_color, tip_text, coach_tip, part_num):
     font_header, font_title, font_sub, font_code, font_footer = get_fonts()
 
+    # Refactored high-retention hook voiceover
     if part_num == 1:
-        voice_script = f"Most developers fail at {title}. Watch till the end to see the fix, and subscribe for part two."
+        voice_script = f"Your {title.lower()} is leaking requests. Here is the exact fix."
     else:
-        voice_script = f"Here is the advanced breakdown for {title}. {coach_tip} Hit subscribe for daily architecture breakdowns."
+        voice_script = f"Fixing {title.lower()} bottlenecks at scale."
 
     tts = gTTS(text=voice_script, lang='en', slow=False)
     audio_path = "voice_track.mp3"
     tts.save(audio_path)
 
-    # Frame 1: High-Retention Hook
+    # Frame 1: Accelerated Hook (Reduced static frame count from 60 to 15 to eliminate drop-off)
     img1 = Image.new("RGB", (1080, 1080), color="#0B0F19")
     draw1 = ImageDraw.Draw(img1)
     draw1.text((60, 60), f"⚡ PART {part_num} — MASTERCLASS", fill="#EF4444" if part_num == 1 else "#34D399", font=font_header)
@@ -206,7 +207,7 @@ def generate_assets(title, subtitle, filename, code_lines, accent_color, tip_tex
     draw1.multiline_text((100, 480), coach_tip, fill="#FFFFFF", font=font_sub, spacing=12)
     draw1.text((60, 930), "@YakubuPeter-o7k2u | Subscribe for More", fill="#475569", font=font_footer)
 
-    frame_list = [np.array(img1)] * 60
+    frame_list = [np.array(img1)] * 15
 
     # Terminal Typing Frames
     current_text_lines = []
