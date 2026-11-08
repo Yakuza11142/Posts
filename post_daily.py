@@ -26,7 +26,6 @@ if not BUFFER_API_KEY or not CHANNEL_IDS:
 
 HISTORY_FILE = "posted_history.json"
 
-# High-tension, polarizing engineering horror stories & production failure topics
 DOMAINS = [
     (
         "PROD INCIDENT POST-MORTEM", 
@@ -123,7 +122,6 @@ def generate_generative_post():
     tags = random.choice(HASHTAG_POOLS)
     part_title_suffix = " (Part 2: The Root Cause Breakdown)" if current_part == 2 else " (Part 1)"
 
-    # Highly polarizing, debate-inducing CTAs to trigger comments
     if "PROD INCIDENT" in domain:
         cta_question = "Have you ever taken down production with a bad SQL query? Drop your horror story below!"
     elif "DOCKER" in domain:
@@ -171,14 +169,13 @@ def get_fonts():
 def generate_assets(title, subtitle, filename, code_lines, accent_color, lesson_text, part_num):
     font_header, font_title, font_sub, font_code, font_footer = get_fonts()
 
-    # High-retention voiceover script targeting the 60-second runtime with a gripping narrative hook
     voice_script = (
         f"Let us talk about a brutal production failure: {subtitle}. "
-        f"Junior and senior engineers alike fall into this exact trap, resulting in catastrophic downtime, frantic midnight paging, and angry users. "
-        f"Look at the exact lines of code causing the failure on your screen right now. "
-        f"Notice how deceptive it looks, yet under heavy production load, it completely shatters system stability. "
-        f"Here is the hard lesson learned from this incident: {lesson_text} "
-        f"Drop a comment with your own production horror story, and subscribe so you never miss a critical breakdown!"
+        f"Engineers frequently fall into this exact trap, resulting in catastrophic downtime. "
+        f"Look at the exact lines of code causing the failure on your screen. "
+        f"Under heavy production load, it completely shatters system stability. "
+        f"Here is the hard lesson learned: {lesson_text} "
+        f"Drop a comment with your own horror story, and subscribe for daily breakdowns!"
     )
 
     tts = gTTS(text=voice_script, lang='en', slow=False)
@@ -186,10 +183,10 @@ def generate_assets(title, subtitle, filename, code_lines, accent_color, lesson_
     tts.save(audio_path)
 
     frame_list = []
-    W, H = 1080, 1920  # 9:16 Vertical Resolution for YouTube Shorts
+    W, H = 1080, 1920  # 9:16 Vertical Resolution
 
     # -------------------------------------------------------------------------
-    # FRAME GROUP 1: Hook & Incident Setup (Duration: ~6 seconds / 180 frames)
+    # FRAME GROUP 1: Hook & Incident Setup (~5 seconds / 150 frames)
     # -------------------------------------------------------------------------
     img1 = Image.new("RGB", (W, H), color="#0B0F19")
     draw1 = ImageDraw.Draw(img1)
@@ -202,13 +199,13 @@ def generate_assets(title, subtitle, filename, code_lines, accent_color, lesson_
     draw1.multiline_text((100, 580), f"What went wrong:\n\n{lesson_text}", fill="#FFFFFF", font=font_sub, spacing=16)
     draw1.text((60, 1800), "@YakubuPeter-o7k2u | Subscribe for More", fill="#475569", font=font_footer)
 
-    frame_list.extend([np.array(img1)] * 180)
+    frame_list.extend([np.array(img1)] * 150)
 
     # -------------------------------------------------------------------------
-    # FRAME GROUP 2: Buggy Code Walkthrough (Duration: ~32 seconds / 960 frames)
+    # FRAME GROUP 2: Buggy Code Walkthrough (~30 seconds / 900 frames)
     # -------------------------------------------------------------------------
     current_text_lines = []
-    frames_per_line = max(60, 960 // max(1, len(code_lines)))
+    frames_per_line = max(60, 900 // max(1, len(code_lines)))
     
     for line in code_lines:
         current_text_lines.append(line)
@@ -226,11 +223,11 @@ def generate_assets(title, subtitle, filename, code_lines, accent_color, lesson_
 
         frame_list.extend([np.array(img_code)] * frames_per_line)
 
-    # Hold final code state for deep analysis (~10 seconds / 300 frames)
-    frame_list.extend([np.array(img_code)] * 300)
+    # Hold final code state (~8 seconds / 240 frames)
+    frame_list.extend([np.array(img_code)] * 240)
 
     # -------------------------------------------------------------------------
-    # FRAME GROUP 3: Takeaway & Polarizing CTA (Duration: ~12 seconds / 360 frames)
+    # FRAME GROUP 3: Takeaway & CTA (~14 seconds / 420 frames)
     # -------------------------------------------------------------------------
     img3 = Image.new("RGB", (W, H), color="#0B0F19")
     draw3 = ImageDraw.Draw(img3)
@@ -244,15 +241,13 @@ def generate_assets(title, subtitle, filename, code_lines, accent_color, lesson_
     draw3.text((100, 1200), "👇 Drop a comment with your outage story & subscribe!", fill="#34D399", font=font_sub)
     draw3.text((60, 1800), "@YakubuPeter-o7k2u", fill="#475569", font=font_footer)
 
-    frame_list.extend([np.array(img3)] * 360)
+    frame_list.extend([np.array(img3)] * 420)
 
-    # Total frames: 180 + 960 + 300 + 360 = 1800 frames = Exactly 60 seconds at 30 FPS.
+    # Total frames: 150 + 900 + 240 + 420 = 1710 frames = Exactly 57 seconds at 30 FPS (Safely under 60s).
     temp_video_path = "temp_tech_asset.mp4"
     final_video_path = "tech_asset.mp4"
     iio.imwrite(temp_video_path, frame_list, fps=30, plugin="FFMPEG")
 
-    # Using -af "apad" pads the audio stream with silence to match the 60s video stream,
-    # preventing FFmpeg from truncating the video early.
     subprocess.run([
         "ffmpeg", "-y", "-i", temp_video_path, "-i", audio_path,
         "-c:v", "copy", "-c:a", "aac", "-af", "apad", "-shortest", final_video_path
@@ -268,7 +263,7 @@ def commit_and_push_assets():
     if subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode == 0:
         return "", ""
 
-    subprocess.run(["git", "commit", "-m", "chore: update production incident 60s masterclass assets [skip ci]"], check=True)
+    subprocess.run(["git", "commit", "-m", "chore: update safe 57s vertical masterclass assets [skip ci]"], check=True)
     subprocess.run(["git", "push"], check=True)
 
     repo = os.getenv("GITHUB_REPOSITORY")
